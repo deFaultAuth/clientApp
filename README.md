@@ -2,7 +2,7 @@
 
 **To Clone The Repository**
 ```
-$ git clone https://gitlab.com/suyogdahal/flask.git
+$ git clone https://github.com/suyogdahal/flask-signup-login.git
 ```
 
 **Installation**
