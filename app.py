@@ -1,8 +1,8 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, flash
 from flask_bootstrap import Bootstrap
 from flask_wtf import FlaskForm
 from wtforms import StringField, BooleanField, PasswordField
-from wtforms.validators import InputRequired, Email, length
+from wtforms.validators import InputRequired, Email, Length
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -37,10 +37,14 @@ def load_user(user_id):
 	return User.query.get(int(user_id))
 
 class LoginForm(FlaskForm):
-	username = StringField('username', validators=[InputRequired(), length(min=4,max=15)])
-	password = PasswordField('password', validators=[InputRequired(), length(min=8,max=80)])
+	username = StringField('username', validators=[InputRequired(), Length(min=4,max=15)])
+	password = PasswordField('password', validators=[InputRequired(), Length(min=8,max=80)])
 	remember = BooleanField('remember me')
 
+class RegisterForm(FlaskForm):
+    email = StringField('email', validators=[InputRequired(), Email(message='Invalid email'), Length(max=50)])
+    username = StringField('username', validators=[InputRequired(), Length(min=4, max=15)])
+    password = PasswordField('password', validators=[InputRequired(), Length(min=8, max=80)])
 
 @app.route('/',methods=['GET', 'POST'])
 def login():
@@ -54,8 +58,27 @@ def login():
 				return redirect(url_for('welcome'))
 		
 		return "<h1>" + "Invalid Username or password" + "</h1>"
+		# flash("Invalid Username or Password")
 
 	return render_template('login.html',form = form)
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    form = RegisterForm()
+
+    if form.validate_on_submit():
+        hashed_password = generate_password_hash(form.password.data, method='sha256')
+        # if User.query.filter_by(username=form.username.data).first() == form.username.data:
+        #     flash("Username already exits!")
+        # else:
+        new_user = User(username=form.username.data, email=form.email.data, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        return '<h1>New user has been created!</h1>'
+        #return '<h1>' + form.username.data + ' ' + form.email.data + ' ' + form.password.data + '</h1>'
+
+    return render_template('signup.html', form=form)
 
 @app.route('/welcome')
 @login_required
